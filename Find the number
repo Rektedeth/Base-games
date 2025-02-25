@@ -1,0 +1,62 @@
+/**
+ *Submitted for verification at basescan.org on 2025-02-25
+*/
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract FindTheNumber {
+    uint256 public secretNumber;
+    uint256 public attempts;
+
+    address public owner;
+
+    // Événements pour notifier les actions
+    event GuessResult(address indexed player, uint256 guessedNumber, bool success);
+    event GameStarted(address indexed player);
+    event Instruction(address indexed player, string message);
+
+    // Constructeur
+    constructor() {
+        owner = msg.sender;
+        startNewGame(); // Démarre le jeu immédiatement après le déploiement du contrat
+    }
+
+    // Fonction pour générer un nouveau nombre secret entre 1 et 21
+    function startNewGame() private {
+        secretNumber = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender))) % 21 + 1;
+        attempts = 0;
+
+        // Envoi une instruction aux joueurs à chaque nouvelle partie
+        emit Instruction(msg.sender, "Ecrivez un chiffre entre 1 et 21 pour deviner le nombre !");
+    }
+
+    // Fonction pour deviner le nombre
+    function guessNumber(uint256 guessedNumber) external {
+        // On vérifie que le nombre est bien dans l'intervalle [1, 21]
+        require(guessedNumber >= 1 && guessedNumber <= 21, "Le nombre doit etre entre 1 et 21.");
+
+        attempts++;
+
+        bool success = false;
+
+        // Vérifie si le joueur a trouvé le bon nombre
+        if (guessedNumber == secretNumber) {
+            success = true;
+            emit GuessResult(msg.sender, guessedNumber, success);
+            startNewGame(); // Recommence une nouvelle partie après une victoire
+        } else {
+            emit GuessResult(msg.sender, guessedNumber, success);
+        }
+    }
+
+    // Fonction pour récupérer le nombre secret (utile pour débogage)
+    function getSecretNumber() external view returns (uint256) {
+        return secretNumber;
+    }
+
+    // Fonction pour récupérer le nombre de tentatives
+    function getAttempts() external view returns (uint256) {
+        return attempts;
+    }
+}
